@@ -1,13 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "mcpsock"
 version = "0.1.0"
-description = "Add your description here"
+description = "WebSocket client and server implementation for FastMCP framework"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.8"
+license = "Apache-2.0"
+authors = [
+    {name = "Andy Miller", email = "andythedishwasher@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+keywords = ["websocket", "fastmcp", "client", "server", "api"]
 dependencies = [
     "fastapi>=0.115.12",
     "fastmcp>=2.2.3",
     "starlette>=0.46.2",
     "uvicorn>=0.34.2",
     "websockets>=15.0.1",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/thecodekitchen/mcpsock"
+"Bug Tracker" = "https://github.com/thecodekitchen/mcpsock/issues"
+"Documentation" = "https://github.com/thecodekitchen/mcpsock#readme"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.18.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "mypy>=0.950",
+    "flake8>=4.0.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.18.0",
+    "pytest-cov>=3.0.0",
 ]
