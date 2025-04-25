@@ -27,7 +27,7 @@ jobs:
         
     - name: Install build dependencies
       run: |
-        uv pip install build
+        uv add -r requirements.txt
         
     - name: Build package
       run: |
