@@ -14,7 +14,6 @@ idna==3.10
 iniconfig==2.1.0
 markdown-it-py==3.0.0
 mcp==1.6.0
--e file:///home/atd/dspy/mcpsock
 mdurl==0.1.2
 openapi-pydantic==0.5.1
 packaging==25.0
