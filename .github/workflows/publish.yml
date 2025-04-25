@@ -1,0 +1,38 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        
+    - name: Install build dependencies
+      run: |
+        uv pip install build
+        
+    - name: Build package
+      run: |
+        uv build
+        
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      # No need to specify username/password as this uses trusted publishing
