@@ -1,6 +1,6 @@
 # MCPSock
 
-MCPSock is a Python library that provides WebSocket client and server implementations for the FastMCP protocol. It offers a clean, easy-to-use API for building WebSocket-based applications that communicate using the FastMCP framework.
+MCPSock is a Python library that provides WebSocket client and server implementations for the FastMCP framework. It offers a clean, easy-to-use API for building WebSocket-based applications that communicate using the FastMCP framework.
 
 ## Features
 
