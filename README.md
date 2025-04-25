@@ -105,7 +105,7 @@ async def example_tool(message, websocket):
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mcpsock.git
+git clone https://github.com/thecodekitchen/mcpsock.git
 cd mcpsock
 
 # Install development dependencies
