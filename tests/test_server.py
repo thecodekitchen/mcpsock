@@ -140,6 +140,13 @@ def test_decorator_methods():
 
     assert router.list_prompts_handler == test_list_prompts
 
+    # Test on_disconnect decorator
+    @router.on_disconnect()
+    async def test_on_disconnect(message, websocket):
+        return None
+
+    assert router.on_disconnect_handler == test_on_disconnect
+
 #
 # Registration Method Tests
 #
@@ -177,6 +184,9 @@ def test_register_handlers():
     async def test_fallback(message, websocket):
         return {"fallback": True}
 
+    async def test_on_disconnect(message, websocket):
+        return None
+
     # Register the handlers
     router.register_initialize_handler(test_initialize)
     router.register_list_tools_handler(test_list_tools)
@@ -187,6 +197,7 @@ def test_register_handlers():
     router.register_prompt_handler("/prompts/test/prompt", test_prompt)
     router.register_method_handler("test_method", test_method)
     router.register_fallback_handler(test_fallback)
+    router.register_on_disconnect_handler(test_on_disconnect)
 
     # Check that the handlers were registered
     assert router.initialize_handler == test_initialize
@@ -198,6 +209,7 @@ def test_register_handlers():
     assert router.prompt_handlers["/prompts/test/prompt"] == test_prompt
     assert router.method_handlers["test_method"] == test_method
     assert router.fallback_handler == test_fallback
+    assert router.on_disconnect_handler == test_on_disconnect
 
 #
 # Default Handler Tests
@@ -441,6 +453,28 @@ async def test_default_list_prompts_handler_param_types():
             assert prompt["parameters"]["param"]["type"] == "object"
         elif prompt["name"] == "/prompts/test/array":
             assert prompt["parameters"]["param"]["type"] == "array"
+
+@pytest.mark.asyncio
+async def test_default_on_disconnect_handler():
+    """Test the default on_disconnect handler."""
+    # Create a WebSocketServer
+    router = WebSocketServer()
+
+    # Create a mock WebSocket
+    mock_websocket = AsyncMock()
+
+    # Create a message
+    message = {
+        "method": "on_disconnect"
+    }
+
+    # Mock the logger to capture logs
+    with patch('mcpsock.server.logger') as mock_logger:
+        # Call the handler directly
+        await router._default_on_disconnect_handler(message, mock_websocket)
+
+        # Check that the disconnection was logged
+        mock_logger.info.assert_called_with("WebSocket disconnected, performing cleanup")
 
 #
 # Advanced Server Tests
@@ -1354,6 +1388,94 @@ async def test_handle_websocket_disconnect():
         # Check that the connection was logged
         mock_logger.info.assert_any_call("WebSocket connection accepted")
         mock_logger.info.assert_any_call("WebSocket connection removed")
+        mock_logger.info.assert_any_call("WebSocket disconnected, performing cleanup")
+
+@pytest.mark.asyncio
+async def test_custom_on_disconnect_handler():
+    """Test that a custom on_disconnect handler is called when a WebSocket disconnects."""
+    # Create a router
+    router = WebSocketServer()
+
+    # Create a mock on_disconnect handler
+    mock_handler = AsyncMock()
+
+    # Register the mock handler
+    router.register_on_disconnect_handler(mock_handler)
+
+    # Create a mock WebSocket
+    mock_websocket = AsyncMock()
+
+    # Set up the iter_text method to raise WebSocketDisconnect
+    mock_websocket.iter_text.side_effect = WebSocketDisconnect()
+
+    # Handle the WebSocket connection
+    await router.handle_websocket(mock_websocket)
+
+    # Check that the on_disconnect handler was called
+    mock_handler.assert_called_once()
+    args, kwargs = mock_handler.call_args
+    assert len(args) == 2
+    assert args[0]["method"] == "on_disconnect"
+    assert args[1] == mock_websocket
+
+@pytest.mark.asyncio
+async def test_on_disconnect_decorator():
+    """Test that the on_disconnect decorator works correctly."""
+    # Create a router
+    router = WebSocketServer()
+
+    # Create a flag to track if the handler was called
+    handler_called = False
+
+    # Define a handler using the decorator
+    @router.on_disconnect()
+    async def handle_disconnect(message, websocket):
+        nonlocal handler_called
+        handler_called = True
+        assert message["method"] == "on_disconnect"
+        assert websocket is not None
+
+    # Create a mock WebSocket
+    mock_websocket = AsyncMock()
+
+    # Set up the iter_text method to raise WebSocketDisconnect
+    mock_websocket.iter_text.side_effect = WebSocketDisconnect()
+
+    # Handle the WebSocket connection
+    await router.handle_websocket(mock_websocket)
+
+    # Check that the handler was called
+    assert handler_called is True
+
+@pytest.mark.asyncio
+async def test_on_disconnect_handler_exception():
+    """Test that exceptions in the on_disconnect handler are caught and don't prevent cleanup."""
+    # Create a router
+    router = WebSocketServer()
+
+    # Create a handler that raises an exception
+    async def error_handler(message, websocket):
+        raise RuntimeError("Test error in on_disconnect handler")
+
+    # Register the handler
+    router.register_on_disconnect_handler(error_handler)
+
+    # Create a mock WebSocket
+    mock_websocket = AsyncMock()
+
+    # Set up the iter_text method to raise WebSocketDisconnect
+    mock_websocket.iter_text.side_effect = WebSocketDisconnect()
+
+    # Mock the logger to capture logs
+    with patch('mcpsock.server.logger') as mock_logger:
+        # Handle the WebSocket connection - should not raise an exception
+        await router.handle_websocket(mock_websocket)
+
+        # Check that the error was logged
+        mock_logger.error.assert_any_call("Error in on_disconnect handler: Test error in on_disconnect handler")
+
+        # Check that the connection was still removed
+        assert mock_websocket not in router.active_connections
 
 @pytest.mark.asyncio
 async def test_handle_websocket_general_exception():

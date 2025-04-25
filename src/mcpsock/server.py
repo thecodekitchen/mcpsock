@@ -60,6 +60,7 @@ class FastMCPWebSocketRouter:
         self.list_tools_handler: Optional[Handler] = None
         self.list_resources_handler: Optional[Handler] = None  # New: List resources handler
         self.list_prompts_handler: Optional[Handler] = None    # New: List prompts handler
+        self.on_disconnect_handler: Optional[Handler] = None   # New: On disconnect handler
         self.active_connections: Set[WebSocket] = set()
 
         # Register default handlers
@@ -67,6 +68,7 @@ class FastMCPWebSocketRouter:
         self.register_list_tools_handler(self._default_list_tools_handler)
         self.register_list_resources_handler(self._default_list_resources_handler)  # New
         self.register_list_prompts_handler(self._default_list_prompts_handler)      # New
+        self.register_on_disconnect_handler(self._default_on_disconnect_handler)    # New
 
     def register_initialize_handler(self, handler: Handler) -> None:
         """Register a handler for initialize requests"""
@@ -83,6 +85,10 @@ class FastMCPWebSocketRouter:
     def register_list_prompts_handler(self, handler: Handler) -> None:
         """Register a handler for list_prompts requests"""
         self.list_prompts_handler = handler
+
+    def register_on_disconnect_handler(self, handler: Handler) -> None:
+        """Register a handler for WebSocket disconnect events"""
+        self.on_disconnect_handler = handler
 
     def register_tool_handler(self, tool_path: str, handler: Handler) -> None:
         """Register a handler for a specific tool path"""
@@ -234,6 +240,13 @@ class FastMCPWebSocketRouter:
             import traceback
             traceback.print_exc()
         finally:
+            # Call the on_disconnect handler if it exists
+            if self.on_disconnect_handler:
+                try:
+                    await self.on_disconnect_handler({"method": "on_disconnect"}, websocket)
+                except Exception as e:
+                    logger.error(f"Error in on_disconnect handler: {str(e)}")
+
             # Clean up
             self.active_connections.remove(websocket)
             logger.info("WebSocket connection removed")
@@ -398,6 +411,24 @@ class FastMCPWebSocketRouter:
 
         return prompts
 
+    async def _default_on_disconnect_handler(self, message: Dict[str, Any], websocket: WebSocket) -> None:
+        """Default handler for WebSocket disconnect events
+
+        This method is called when a WebSocket connection is closed, either due to
+        a client disconnection or an error. It can be overridden to perform custom
+        cleanup operations when a connection is terminated.
+
+        Args:
+            message: A message with method "on_disconnect"
+            websocket: The WebSocket that was disconnected
+
+        Returns:
+            None
+        """
+        logger.info("WebSocket disconnected, performing cleanup")
+        # Default implementation does nothing special
+        # Subclasses can override this to perform custom cleanup
+
 
 class DecoratorRouter(FastMCPWebSocketRouter):
     """
@@ -467,6 +498,27 @@ class DecoratorRouter(FastMCPWebSocketRouter):
         """Decorator for registering fallback handlers"""
         def decorator(func: Handler):
             self.register_fallback_handler(func)
+            return func
+        return decorator
+
+    def on_disconnect(self):
+        """Decorator for registering WebSocket disconnect handlers
+
+        This decorator registers a handler that will be called when a WebSocket
+        connection is closed, either due to a client disconnection or an error.
+
+        Example:
+            ```python
+            @router.on_disconnect()
+            async def handle_disconnect(message, websocket):
+                # Perform cleanup operations
+                user_id = getattr(websocket, "user_id", None)
+                if user_id:
+                    await remove_user_from_active_sessions(user_id)
+            ```
+        """
+        def decorator(func: Handler):
+            self.register_on_disconnect_handler(func)
             return func
         return decorator
 
