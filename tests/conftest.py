@@ -11,12 +11,8 @@ import uvicorn
 import threading
 import time
 
-@pytest.fixture
-def event_loop():
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Using pytest-asyncio's built-in event_loop fixture instead of defining our own
+# This avoids the deprecation warning
 
 @pytest.fixture
 def app():
