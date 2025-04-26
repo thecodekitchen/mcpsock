@@ -2,7 +2,8 @@ name: Publish to PyPI
 
 on:
   release:
-    types: [created, updated]
+    types: [created, updated, published, edited]
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   deploy:
