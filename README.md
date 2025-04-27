@@ -37,7 +37,7 @@ async def main():
         print(f"Available tools: {tools}")
 
         # Call a tool
-        result = await client.call_tool("example/tool", {"param": "value"})
+        result = await client.call_tool("/tools/example/tool", {"param": "value"})
         print(f"Tool result: {result}")
 
 if __name__ == "__main__":
@@ -58,13 +58,13 @@ app = FastAPI()
 router = WebSocketServer()
 
 # Register a tool handler
-@router.tool("example/tool")
+@router.tool("/tools/example/tool")
 async def example_tool(message, websocket):
     params = message.get("params", {})
     return {"result": f"Processed: {params}"}
 
 # Register a resource handler
-@router.resource("example/resource")
+@router.resource("/resources/example/resource")
 async def example_resource(message, websocket):
     return {"data": "This is example resource data"}
 
