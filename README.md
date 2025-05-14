@@ -1,5 +1,5 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/thecodekitchen-mcpsock-badge.png)](https://mseep.ai/app/thecodekitchen-mcpsock)
-
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/6b610888-26a2-42f4-834b-c84e51ad233a)
 # MCPSock
 
 MCPSock is a Python library that provides WebSocket client and server implementations for the FastMCP framework. It offers a clean, easy-to-use API for building WebSocket-based applications that communicate using the FastMCP framework.
